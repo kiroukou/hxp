@@ -1,0 +1,8 @@
+
+-cp src
+
+-lib tink_json
+-dce full
+-debug
+-main Main
+-neko run.n

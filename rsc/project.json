@@ -1,0 +1,34 @@
+
+{
+    "project" : {
+        "name" : "sample",
+        "version" : "1.0.0",
+        "author" : "kiroukou",
+        
+        "app" : {
+            "name" : "sample_project",
+            "package" : "com.kiroukou.sample",
+            "output" : "bin/",
+            "main" : "Main",
+            
+            "neko" : {
+                "libs" : ["msignal"]
+            },
+
+            "libs" : ["tink"]
+        },
+
+        "build" : {
+            "flags" : ["-v", "--macro keep(test)"],
+            "defines" : ["no_sfx", "no_music"],
+            "sources" : ["src"]
+        }
+    },
+
+    "if" : {
+        "true" : {
+            
+        }
+    }
+}
+    
