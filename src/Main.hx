@@ -29,16 +29,16 @@ class Main
         parseProject(context, app.project);
     }
 
-    function loadDependency(context:ParserContext, path:String)
+    function loadDependency(context:ParserContext, dependencyPath:String)
     {
         var currentPath = context.getCurrentPath();
-        var newPath = currentPath+path;
-        context.setCurrentPath(newPath);
-
+        var newPath = Helper.combine(currentPath,dependencyPath);
+        context.setCurrentPath(Helper.getFileDirectory(newPath));
+        
         var json = sys.io.File.getContent(newPath);
         var node : BuildNode = tink.Json.parse(json);
         parseDependency(context, node);
-        
+
         context.setCurrentPath(currentPath);
         return node;
     }

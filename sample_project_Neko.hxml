@@ -1,12 +1,11 @@
 -lib tink
+-lib tink_json
 -lib format
 -v
---macro keep(test)
 --no-traces
 -cp C:\HaxeToolkit\haxelib\hxp\git/src
--cp C:\HaxeToolkit\haxelib\hxp\git/module/include.hxpsrc
--D no_music
--D no_sfx
+-cp C:\HaxeToolkit\haxelib\hxp\git/module/src
+-D NOTPHPTARGET
 -D toto
 -main Main
 -neko bin/project.n

@@ -12,7 +12,7 @@
                 "output" : "bin/project.n",
                 "libs" : ["msignal"]
             },
-            
+
             "libs" : ["tink"],
 
             "dependencies" : [
@@ -21,9 +21,18 @@
         },
 
         "build" : {
-            "flags" : ["-v", "--macro keep(test)"],
-            "defines" : ["no_sfx", "no_music"],
-            "sources" : ["src"]
+            "flags" : ["-v"],
+            "defines" : [],
+            "sources" : ["src"],
+            "if" : [
+                ["php", {
+                    "defines" : ["PHPDEFINE"]
+                }],
+                ["!php", {
+                    "defines": ["NOTPHPTARGET"],
+                    "libs" : ["tink_json"]
+                }]
+            ]
         }
     }
 }
