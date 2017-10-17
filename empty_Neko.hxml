@@ -1,9 +1,0 @@
--D no_sfx
--D no_music
--v
---macro keep(example)
--lib tink
--main Game
--cp src
--neko bin/luxe_empty.n
--lib msignal

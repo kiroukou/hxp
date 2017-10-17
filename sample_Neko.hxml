@@ -1,9 +1,0 @@
--D no_sfx
--D no_music
--v
---macro keep(test)
--lib tink
--main Main
--cp src
--neko bin/sample_project.n
--lib msignal

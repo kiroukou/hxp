@@ -1,0 +1,13 @@
+{
+    "build" : {
+        "flags" : ["--no-traces"],
+        "defines" : ["toto"],
+        "sources" : ["src"]
+    },
+
+    "if" : [
+        "php" : {
+            "libs" : ["hxods"]
+        }
+    ]
+}

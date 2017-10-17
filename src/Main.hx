@@ -4,44 +4,45 @@ package;
 import tink.json.*;
 import tink.Json.*;
 
-typedef TargetNode = {
-    @:optional var libs : Array<String>;
-    @:json('if') @:optional var _if : String;
+typedef CondNode = {
+    @:json('if') var ifCond : Map<String, CondNode>;
+}
+
+typedef ConfigNode = {
+    > CondNode,
+    ?libs : Array<String>,
+    ?flags : Array<String>,
+    ?defines : Array<String>,
+    ?sources : Array<String>
 }
 
 typedef BuildNode = {
-    @:optional var flags : Array<String>;
-    @:optional var defines : Array<String>;
-    @:optional var dependencies : Map<String,String>;
-    var sources:Array<String>;
-    @:json('if') @:optional var _if : String;
+    > ConfigNode,
+    ?dependencies : Map<String,String>,
 }
 
-typedef FilesNode = {
-    @:optional var config : { path:String, template:String};
-    @:optional var data : String;
-    @:json('if') @:optional var _if : String; 
+typedef TargetNode = {
+    > ConfigNode,
+    var output : String;
+    @:optional var main : String;
+    @:json('package') var packageName : String;
 }
 
 typedef AppNode = {
-    var name : String;
-    @:json('package') var _package : String;
-    var output : String;
-    var main : String;
-    @:optional var neko : TargetNode;
-    @:optional var php : TargetNode;
-    @:optional var libs : Array<String>;
-    @:json('if') @:optional var _if : String;
-    @:optional var files : FilesNode;
+    > ConfigNode,
+    name : String,
+    ?dependencies : Array<String>,
+    ?main : String,
+    ?neko : TargetNode,
+    ?php : TargetNode,
 }
 
 typedef ProjectNode = {
-    var name : String;
-    @:optional var version : String;
-    @:optional var author : String;
-    var app : AppNode;
-    var build : BuildNode;
-    @:json('if') @:optional var _if : String;
+    name : String,
+    version : String,
+    ?author : String,
+    app : AppNode,
+    build : BuildNode
 }
 
 class NodeContext 
@@ -110,72 +111,126 @@ class Main
     public function new()
     {
         appTargets = new Map();
-        var jsonContent = sys.io.File.getContent("rsc/project.json");
+        var jsonContent = sys.io.File.getContent("rsc/project.hxp");
         parse(jsonContent);
     }
 
     function parse(json:String)
     {
+        var context = new NodeContext();
         var app : {project:ProjectNode} = tink.Json.parse(json);
-        generateHxml(app.project);
+        parseProject(context, app.project);
     }
 
-    function generateHxml(project:ProjectNode)
+    function loadDependency(context:NodeContext, path:String)
     {
-        var context = new NodeContext();
-        for( define in project.build.defines )
-        {
-            context.appendHxml("-D "+define);
-        }
-        for( flag in project.build.flags )
-        {
-            context.appendHxml(flag);
-        }
+        var current = Sys.getCwd();
+        var json = sys.io.File.getContent(current+path);
+        var node : BuildNode = tink.Json.parse(json);
+        return node;
+    }
 
-        if( project.app.libs != null )
+    function parseDefines(context:NodeContext, node:ConfigNode)
+    {
+        if( node.defines != null )
         {
-            for( lib in project.app.libs )
+            for( define in node.defines )
+            {
+                context.appendHxml("-D "+define);
+            }
+        }
+    }
+
+    function parseFlags(context:NodeContext, node:ConfigNode)
+    {
+        if( node.flags != null )
+        {
+            for( flag in node.flags )
+            {
+                context.appendHxml(flag);
+            }
+        }
+    }
+
+    function parseLibs(context:NodeContext, node:ConfigNode)
+    {
+        if( node.libs != null )
+        {
+            for( lib in node.libs )
             {
                 context.appendHxml("-lib "+lib);
             }
         }
+    }
 
-        context.appendHxml("-main "+project.app.main);
-        for( path in project.build.sources )
+    function parseSources(context:NodeContext, node:ConfigNode)
+    {
+        if( node.sources != null )
         {
-            context.appendHxml("-cp "+path);
+            for( src in node.sources )
+            {
+                context.appendHxml("-cp "+src);
+            }
+        }
+    }
+
+    function parseDependency(context:NodeContext, node:BuildNode)
+    {
+        parseLibs(context, node);
+        parseFlags(context, node);
+        parseDefines(context, node);
+        parseSources(context, node);
+    }
+
+    function parseProject(context:NodeContext, node:ProjectNode)
+    {
+        parseLibs(context, node.app);
+        parseFlags(context, node.build);
+        parseDefines(context, node.build);
+        parseSources(context, node.build);
+
+        if( node.app.main != null ) 
+        {
+            context.appendHxml("-main "+node.app.main);
+        }
+        
+        if( node.build.dependencies != null )
+        {
+            for( dep in node.build.dependencies )
+            {
+                var n = loadDependency(context, dep);
+                parseDependency(context, n);
+            }
         }
 
-        if( project.app.neko != null )
+        if( node.app.neko != null )
         {
-            generateTarget(Neko, context.clone(), project, project.app.neko);
+            generateTarget(Neko, context.clone(), node.app.neko);
         }
 
-        if( project.app.php != null )
+        if( node.app.php != null )
         {
-            generateTarget(Php, context.clone(), project, project.app.php);
+            generateTarget(Php, context.clone(), node.app.php);
         }
         
         var path = Sys.getCwd();
         for( target in appTargets.keys() )
         {
-            var f = sys.io.File.write(path+"/"+project.name+"_"+target+".hxml", false);
+            var f = sys.io.File.write(path+"/"+node.name+"_"+target+".hxml", false);
             f.writeString(appTargets.get(target).hxmlBuffer);
             f.flush();
             f.close();
         }
-
     }
-//TODO make this more generic
-//maybe a map to store the targets configurations?
-    function generateTarget(target:BuildTarget, context:NodeContext, project:ProjectNode, config:TargetNode)
+
+    function generateTarget(target:BuildTarget, context:NodeContext, config:TargetNode)
     {
-        var cmd = "", out = "";
-        switch(target)
-        {
-            case Neko: cmd = "neko"; out = project.app.output+""+project.app.name+".n";
-            case Php: cmd = "php"; out = project.app.output;
+        var out = config.output;
+        var cmd = switch(target) {
+            case Neko: "neko";
+            case Php: "php";
         }
+
         context.appendHxml("-"+cmd+" "+out);
         if(config.libs != null )
         {
@@ -184,23 +239,13 @@ class Main
                 context.appendHxml("-lib "+lib);
             }
         }
+
+        if( config.main != null ) 
+            context.appendHxml("-main "+config.main);
+
         appTargets.set(Std.string(target), context);
         return context;
-    }
 
-    function generatePhp(context:NodeContext, project:ProjectNode, config:TargetNode)
-    {
-        var ext = ".n";
-        context.appendHxml("-php "+project.app.output+""+project.app.name+""+ext);
-        if(config.libs != null )
-        {
-            for( lib in config.libs )
-            {
-                context.appendHxml("-lib "+lib);
-            }
-        }
-        appTargets.set("php", context);
-        return context;
     }
 
     public static function main()

@@ -1,17 +1,16 @@
 
 {
     "project" : {
-        "name" : "sample",
+        "name" : "sample_project",
         "version" : "1.0.0",
         "author" : "kiroukou",
         
         "app" : {
-            "name" : "sample_project",
             "package" : "com.kiroukou.sample",
-            "output" : "bin/",
             "main" : "Main",
             
             "neko" : {
+                "output" : "bin/project.n",
                 "libs" : ["msignal"]
             },
 
@@ -22,12 +21,6 @@
             "flags" : ["-v", "--macro keep(test)"],
             "defines" : ["no_sfx", "no_music"],
             "sources" : ["src"]
-        }
-    },
-
-    "if" : {
-        "true" : {
-            
         }
     }
 }
