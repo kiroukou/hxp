@@ -1,13 +1,11 @@
 {
-    "build" : {
-        "flags" : ["--no-traces"],
-        "defines" : ["toto"],
-        "sources" : ["src"]
-    },
+
+    "flags" : ["--no-traces"],
+    "defines" : ["toto"],
+    "sources" : ["src"],
 
     "if" : [
-        "php" : {
-            "libs" : ["hxods"]
-        }
+        ["php" , {"libs" : ["hxods"]}],
+        ["neko" , {"libs" : ["format"]}]
     ]
 }

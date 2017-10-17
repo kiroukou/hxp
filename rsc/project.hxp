@@ -6,15 +6,18 @@
         "author" : "kiroukou",
         
         "app" : {
-            "package" : "com.kiroukou.sample",
             "main" : "Main",
             
             "neko" : {
                 "output" : "bin/project.n",
                 "libs" : ["msignal"]
             },
+            
+            "libs" : ["tink"],
 
-            "libs" : ["tink"]
+            "dependencies" : [
+                "module/include.hxp"
+            ]
         },
 
         "build" : {

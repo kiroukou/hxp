@@ -1,255 +1,185 @@
-
 package;
 
-import tink.json.*;
-import tink.Json.*;
-
-typedef CondNode = {
-    @:json('if') var ifCond : Map<String, CondNode>;
-}
-
-typedef ConfigNode = {
-    > CondNode,
-    ?libs : Array<String>,
-    ?flags : Array<String>,
-    ?defines : Array<String>,
-    ?sources : Array<String>
-}
-
-typedef BuildNode = {
-    > ConfigNode,
-    ?dependencies : Map<String,String>,
-}
-
-typedef TargetNode = {
-    > ConfigNode,
-    var output : String;
-    @:optional var main : String;
-    @:json('package') var packageName : String;
-}
-
-typedef AppNode = {
-    > ConfigNode,
-    name : String,
-    ?dependencies : Array<String>,
-    ?main : String,
-    ?neko : TargetNode,
-    ?php : TargetNode,
-}
-
-typedef ProjectNode = {
-    name : String,
-    version : String,
-    ?author : String,
-    app : AppNode,
-    build : BuildNode
-}
-
-class NodeContext 
-{
-    public var defines(get, null):haxe.ds.StringMap<Bool>;
-    public var hxmlBuffer(get, null):String;
-
-    public function new(?from:NodeContext)
-    {
-        if( from != null )
-        {
-            this.defines = from.defines;
-            this.hxmlBuffer = from.hxmlBuffer;
-        }
-        else
-        {
-            this.defines = new haxe.ds.StringMap();
-            this.hxmlBuffer = "";
-        }
-    }
-
-    public function isDefined(name:String):Bool
-    {
-        var v = this.defines.get(name);
-        return ( v != null && v == true ) ? true : false;
-    }
-
-    public function addDefine(name:String, value:Bool) 
-    {
-        this.defines.set(name, value);
-    }
-
-    public function appendHxml(command:String) 
-    {
-        this.hxmlBuffer += command;
-        this.hxmlBuffer += "\n";
-    }
-
-    function get_defines():haxe.ds.StringMap<Bool> 
-    {
-        return Reflect.copy(this.defines);
-    }
-
-    function get_hxmlBuffer():String 
-    {
-        return Std.string(hxmlBuffer);
-    }
-
-    public function clone():NodeContext
-    {
-        var c = new NodeContext();
-        c.defines = Reflect.copy(this.defines);
-        c.hxmlBuffer = Std.string(this.hxmlBuffer);
-        return c;
-    }
-}
-
-enum BuildTarget {
-    Neko;
-    Php;
-}
+import Types;
+import ParserContext;
 
 class Main
 {
-    var appTargets:Map<String, NodeContext>;
-    public function new()
+    public function new(file:String, target:BuildTarget, vars:Array<String>)
     {
-        appTargets = new Map();
-        var jsonContent = sys.io.File.getContent("rsc/project.hxp");
-        parse(jsonContent);
+        var context = new ParserContext(target);
+        context.setCurrentPath(Sys.getCwd());
+        //
+        for( v in vars )
+            context.setVariable(v, true);
+        
+        switch(target)
+        {
+            case Php: context.setVariable("php", true);
+            case Neko: context.setVariable("neko", true);
+        }
+        //
+        var jsonContent = sys.io.File.getContent(file);
+        parse(context, jsonContent);
     }
 
-    function parse(json:String)
+    function parse(context:ParserContext,json:String)
     {
-        var context = new NodeContext();
         var app : {project:ProjectNode} = tink.Json.parse(json);
         parseProject(context, app.project);
     }
 
-    function loadDependency(context:NodeContext, path:String)
+    function loadDependency(context:ParserContext, path:String)
     {
-        var current = Sys.getCwd();
-        var json = sys.io.File.getContent(current+path);
+        var currentPath = context.getCurrentPath();
+        var newPath = currentPath+path;
+        context.setCurrentPath(newPath);
+
+        var json = sys.io.File.getContent(newPath);
         var node : BuildNode = tink.Json.parse(json);
+        parseDependency(context, node);
+        
+        context.setCurrentPath(currentPath);
         return node;
     }
 
-    function parseDefines(context:NodeContext, node:ConfigNode)
+    function parseDefines(context:ParserContext, node:BuildNode)
     {
         if( node.defines != null )
         {
             for( define in node.defines )
             {
-                context.appendHxml("-D "+define);
+                context.addDefine(define, true);
             }
         }
     }
 
-    function parseFlags(context:NodeContext, node:ConfigNode)
+    function parseFlags(context:ParserContext, node:BuildNode)
     {
         if( node.flags != null )
         {
             for( flag in node.flags )
             {
-                context.appendHxml(flag);
+                context.addArgument(flag);
             }
         }
     }
 
-    function parseLibs(context:NodeContext, node:ConfigNode)
+    function parseLibs(context:ParserContext, node:BuildNode)
     {
         if( node.libs != null )
         {
             for( lib in node.libs )
             {
-                context.appendHxml("-lib "+lib);
+                context.addLibrary(lib);
             }
         }
     }
 
-    function parseSources(context:NodeContext, node:ConfigNode)
+    //TODO handle path
+    function parseSources(context:ParserContext, node:BuildNode)
     {
         if( node.sources != null )
         {
             for( src in node.sources )
             {
-                context.appendHxml("-cp "+src);
+                context.addSource(src);
             }
         }
     }
 
-    function parseDependency(context:NodeContext, node:BuildNode)
+    function parseDependency(context:ParserContext, node:BuildNode)
     {
         parseLibs(context, node);
         parseFlags(context, node);
         parseDefines(context, node);
         parseSources(context, node);
+        parseConditional(context, node);
     }
 
-    function parseProject(context:NodeContext, node:ProjectNode)
+    function parseConditional(context:ParserContext, node:BuildNode)
+    {
+        if( node.ifCond != null ) 
+        {
+            trace("node.ifCond = "+node.ifCond);
+            var eval = new Eval(context);
+            for( cond in node.ifCond.keys() )
+            {
+                var result = eval.evaluate(cond);
+                trace("cond = "+cond);
+                trace("result = "+result);
+                if( result )
+                {
+                    var node = node.ifCond.get(cond);
+                    parseBuildNode(context, node);
+                }
+            }
+        }
+    }
+
+    function parseBuildNode(context:ParserContext, node:BuildNode)
+    {
+        parseFlags(context, node);
+        parseDefines(context, node);
+        parseSources(context, node);
+        parseLibs(context, node);
+        parseConditional(context, node);
+    }
+
+    function parseProject(context:ParserContext, node:ProjectNode)
     {
         parseLibs(context, node.app);
-        parseFlags(context, node.build);
-        parseDefines(context, node.build);
-        parseSources(context, node.build);
+        parseBuildNode(context, node.build);
 
         if( node.app.main != null ) 
         {
-            context.appendHxml("-main "+node.app.main);
+            context.setMain(node.app.main);
         }
         
-        if( node.build.dependencies != null )
+        if( node.app.dependencies != null )
         {
-            for( dep in node.build.dependencies )
+            for( dep in node.app.dependencies )
             {
-                var n = loadDependency(context, dep);
-                parseDependency(context, n);
+                loadDependency(context, dep);
             }
         }
 
-        if( node.app.neko != null )
-        {
-            generateTarget(Neko, context.clone(), node.app.neko);
-        }
-
-        if( node.app.php != null )
-        {
-            generateTarget(Php, context.clone(), node.app.php);
-        }
-        
         var path = Sys.getCwd();
-        for( target in appTargets.keys() )
-        {
-            var f = sys.io.File.write(path+"/"+node.name+"_"+target+".hxml", false);
-            f.writeString(appTargets.get(target).hxmlBuffer);
-            f.flush();
-            f.close();
+        var f = sys.io.File.write(path+"/"+node.name+"_"+context.getTarget()+".hxml", false);
+        
+        function write(v) {
+            f.writeString(v+"\n");
         }
+
+        for(lib in context.getLibraries() )
+            write("-lib "+lib);
+        for( arg in context.getArguments() )
+            write(arg);
+        for( src in context.getSources() )
+            write("-cp "+src);
+        for( def in context.getDefines().keys() )
+            write("-D "+def);
+        
+        write("-main "+context.getMain());
+
+        switch(context.getTarget()) {
+            case Neko: 
+                if( node.app.neko == null )
+                    throw "Neko node must be defined";
+                write("-neko "+node.app.neko.output);
+            case Php:
+                if( node.app.php == null )
+                    throw "Php node must be defined";
+                write("-php "+node.app.php.output);
+        }
+
+        f.flush();
+        f.close();
     }
 
-    function generateTarget(target:BuildTarget, context:NodeContext, config:TargetNode)
-    {
-        var out = config.output;
-        var cmd = switch(target) {
-            case Neko: "neko";
-            case Php: "php";
-        }
-
-        context.appendHxml("-"+cmd+" "+out);
-        if(config.libs != null )
-        {
-            for( lib in config.libs )
-            {
-                context.appendHxml("-lib "+lib);
-            }
-        }
-
-        if( config.main != null ) 
-            context.appendHxml("-main "+config.main);
-
-        appTargets.set(Std.string(target), context);
-        return context;
-
-    }
 
     public static function main()
     {
-        new Main();
+        new Main("rsc/project.hxp", Neko, []);
     }
 }

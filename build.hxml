@@ -1,6 +1,6 @@
 
 -cp src
-
+-lib hscript
 -lib tink_json
 -dce full
 -debug
