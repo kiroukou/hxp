@@ -2,6 +2,7 @@
 -cp src
 -lib hscript
 -lib tink_json
+-lib tink_cli
 -dce full
 -debug
 -main Main
