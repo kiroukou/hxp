@@ -143,8 +143,11 @@ class Main
     function processBuild(context:ParserContext, node:ProjectNode) 
     {
         var path = Sys.getCwd();
-        var f = sys.io.File.write(path+"/"+node.name+"_"+context.getTarget()+".hxml", false);
+        var outFileName =   context.getOutput();
+        if( outFileName == null ) 
+            outFileName = path+"/"+node.name+"_"+context.getTarget()+".hxml";
         
+        var f = sys.io.File.write(outFileName, false);
         function write(v) {
             f.writeString(v+"\n");
         }
@@ -158,19 +161,23 @@ class Main
         for( def in context.getDefines().keys() )
             write("-D "+def);
         
-        write("-main "+context.getMain());
 
         switch(context.getTarget()) 
         {
             case Neko: 
                 if( node.app.neko == null )
                     throw "Neko node must be defined";
+                if( node.app.neko.main != null )
+                    context.setMain(node.app.neko.main);
                 write("-neko "+node.app.neko.output);
             case Php:
                 if( node.app.php == null )
                     throw "Php node must be defined";
+                if( node.app.php.main != null )
+                    context.setMain(node.app.php.main);
                 write("-php "+node.app.php.output);
         }
+        write("-main "+context.getMain());
 
         f.flush();
         f.close();
@@ -212,6 +219,7 @@ class Main
             if( !sys.FileSystem.exists(cmd.getFile()) )
                throw "First argument must be the project file XXXXX.hxp";
 
+            context.setOutput(cmd.getOutput());
             new Main(cmd.getCommand(), cmd.getFile(), context);
         });
     }
@@ -226,6 +234,9 @@ class HxpArgsCommand
 
     @:flag('-f')
 	public var file:String;
+
+    @:flag('-o')
+	public var output:Null<String>;
 	
     @:flag('-debug')
     public var debug:Bool;
@@ -243,6 +254,11 @@ class HxpArgsCommand
     public function getCommand()
     {
         return command;
+    }
+
+    public function getOutput()
+    {
+        return output;
     }
 
     public function getFile()

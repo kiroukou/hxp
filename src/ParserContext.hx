@@ -4,6 +4,7 @@ class ParserContext
 {
     var path:String;
     var target:BuildTarget;
+    var output:String;
     var variables:haxe.ds.StringMap<Bool>;
     //
     var defines:haxe.ds.StringMap<Bool>;
@@ -39,6 +40,16 @@ class ParserContext
         }
     }
 
+    public function setOutput(output:String)
+    {
+        this.output= output;
+    }
+
+    public function getOutput()
+    {
+        return this.output;
+    }
+    
     public function setCurrentPath(path:String)
     {
         this.path = path;

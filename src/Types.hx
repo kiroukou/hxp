@@ -25,7 +25,7 @@ typedef BuildNode = {
 }
 
 typedef TargetNode = {
-    > BuildNode,
+    //> BuildNode,
     var output : String;
     @:optional var main : String;
 }
