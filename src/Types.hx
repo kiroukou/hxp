@@ -4,6 +4,11 @@ enum BuildTarget {
     Php;
 }
 
+enum BuildCommand {
+    INSTALL;
+    BUILD;
+}
+
 enum Platform {
     MAC;
     WINDOWS;

@@ -7,8 +7,10 @@ import tink.Cli;
 
 class Main
 {
-    public function new(file:String, context:ParserContext)
+    var cmd:BuildCommand;
+    public function new(cmd:BuildCommand, file:String, context:ParserContext)
     {
+        this.cmd = cmd;
         var jsonContent = sys.io.File.getContent(file);
         parse(context, jsonContent);
     }
@@ -91,13 +93,10 @@ class Main
     {
         if( node.ifCond != null ) 
         {
-            trace("node.ifCond = "+node.ifCond);
             var eval = new Eval(context);
             for( cond in node.ifCond.keys() )
             {
                 var result = eval.evaluate(cond);
-                trace("cond = "+cond);
-                trace("result = "+result);
                 if( result )
                 {
                     var node = node.ifCond.get(cond);
@@ -126,14 +125,23 @@ class Main
             context.setMain(node.app.main);
         }
         
-        if( node.app.dependencies != null )
+        if( node.app.includes != null )
         {
-            for( dep in node.app.dependencies )
+            for( dep in node.app.includes )
             {
                 loadDependency(context, dep);
             }
         }
 
+        switch( cmd )
+        {
+            case BUILD: processBuild(context, node);
+            case INSTALL: processInstall(context);
+        }
+    }
+
+    function processBuild(context:ParserContext, node:ProjectNode) 
+    {
         var path = Sys.getCwd();
         var f = sys.io.File.write(path+"/"+node.name+"_"+context.getTarget()+".hxml", false);
         
@@ -152,7 +160,8 @@ class Main
         
         write("-main "+context.getMain());
 
-        switch(context.getTarget()) {
+        switch(context.getTarget()) 
+        {
             case Neko: 
                 if( node.app.neko == null )
                     throw "Neko node must be defined";
@@ -165,6 +174,21 @@ class Main
 
         f.flush();
         f.close();
+    }
+
+    function processInstall(context:ParserContext)
+    {
+        for(lib in context.getLibraries() )
+        {
+            var process = new sys.io.Process("haxelib", ["install", lib]);
+            var output = process.stdout.readAll ().toString ();
+			var error = process.stderr.readAll ().toString ();
+			process.exitCode ();
+			process.close ();
+            Sys.println(output);
+            //Sys.println("error : "+error);
+            //Sys.println("haxelib install "+lib);
+        }  
     }
 
 
@@ -186,7 +210,10 @@ class Main
             for(d in cmd.defines)
                 context.addDefine(d, true);
             //
-            new Main(cmd.getFile(), context);
+            if( !sys.FileSystem.exists(cmd.getFile()) )
+               throw "First argument must be the project file XXXXX.hxp";
+
+            new Main(cmd.getCommand(), cmd.getFile(), context);
         });
     }
 }
@@ -195,25 +222,30 @@ class Main
 @:alias(false)
 class HxpArgsCommand
 {
-    @:command
-	public function update() {
-		Sys.println("Update and install dependencies");
-	}
-
 	@:flag('-D')
 	public var defines:Array<String>;
+
+    @:flag('-f')
+	public var file:String;
 	
     @:flag('-debug')
     public var debug:Bool;
 	
+    var command:BuildCommand;
     var target:BuildTarget;
-    var file:String;
     var variables:Array<String>;
-	public function new() {
+	public function new() 
+    {
         variables = [];
         defines = [];
+        file = "project.hxp";
     }
 	
+    public function getCommand()
+    {
+        return command;
+    }
+
     public function getFile()
     {
         return file;
@@ -230,11 +262,10 @@ class HxpArgsCommand
     }
 
 	@:defaultCommand
-	public function run(rest:Rest<String>) {
-		file = rest.shift();
-        if( !StringTools.endsWith(file, ".hxp") )
-            throw "First argument must be the project file XXXXX.hxp";
-        
+	public function build(rest:Rest<String>) 
+    {
+        command = BuildCommand.BUILD;
+        //TODO think a way to use Enums here?
         target = switch(rest.shift().toLowerCase() ) {
             case "php": variables.push("php"); Php;
             case "neko": variables.push("neko"); Neko;
@@ -242,5 +273,19 @@ class HxpArgsCommand
         }
         variables = variables.concat(rest);
 	}
+
+    @:alias('install')
+    @:command
+	public function update(rest:Rest<String>) 
+    {
+		command = BuildCommand.INSTALL;
+        target = switch(rest.shift().toLowerCase() ) {
+            case "php": variables.push("php"); Php;
+            case "neko": variables.push("neko"); Neko;
+            default: throw "unknown platform";//TODO improve
+        }
+        variables = variables.concat(rest);
+	}
+
 }
 
