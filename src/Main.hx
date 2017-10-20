@@ -2,23 +2,13 @@ package;
 
 import Types;
 import ParserContext;
+import tink.cli.*;
+import tink.Cli;
 
 class Main
 {
-    public function new(file:String, target:BuildTarget, vars:Array<String>)
+    public function new(file:String, context:ParserContext)
     {
-        var context = new ParserContext(target);
-        context.setCurrentPath(Sys.getCwd());
-        //
-        for( v in vars )
-            context.setVariable(v, true);
-        
-        switch(target)
-        {
-            case Php: context.setVariable("php", true);
-            case Neko: context.setVariable("neko", true);
-        }
-        //
         var jsonContent = sys.io.File.getContent(file);
         parse(context, jsonContent);
     }
@@ -180,6 +170,77 @@ class Main
 
     public static function main()
     {
-        new Main("rsc/project.hxp", Neko, []);
+        var cmd = new HxpArgsCommand();
+        Cli.process(Sys.args(), cmd).handle( function(o) {
+            var context = new ParserContext(cmd.getTarget());
+            context.setCurrentPath(Sys.getCwd());
+            
+            if( cmd.debug )
+            {
+                context.setVariable("debug", true);
+                context.addArgument("-debug");
+            }
+
+            for( v in cmd.getVariables() )
+                context.setVariable(v, true);
+            for(d in cmd.defines)
+                context.addDefine(d, true);
+            //
+            new Main(cmd.getFile(), context);
+        });
     }
 }
+
+//haxelib run hxp project.hxp php -debug
+@:alias(false)
+class HxpArgsCommand
+{
+    @:command
+	public function update() {
+		Sys.println("Update and install dependencies");
+	}
+
+	@:flag('-D')
+	public var defines:Array<String>;
+	
+    @:flag('-debug')
+    public var debug:Bool;
+	
+    var target:BuildTarget;
+    var file:String;
+    var variables:Array<String>;
+	public function new() {
+        variables = [];
+        defines = [];
+    }
+	
+    public function getFile()
+    {
+        return file;
+    }
+
+    public function getTarget()
+    {
+        return target;
+    }
+
+    public function getVariables()
+    {
+        return this.variables;
+    }
+
+	@:defaultCommand
+	public function run(rest:Rest<String>) {
+		file = rest.shift();
+        if( !StringTools.endsWith(file, ".hxp") )
+            throw "First argument must be the project file XXXXX.hxp";
+        
+        target = switch(rest.shift().toLowerCase() ) {
+            case "php": variables.push("php"); Php;
+            case "neko": variables.push("neko"); Neko;
+            default: throw "unknown platform";//TODO improve
+        }
+        variables = variables.concat(rest);
+	}
+}
+

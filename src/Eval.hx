@@ -23,7 +23,6 @@ class Eval
     {
         this.context = context;
         parser = new hscript.Parser();
-        //parser.allowTypes = true;
         interp = new Interp();
         
         var variables = context.getVariables();
@@ -34,9 +33,7 @@ class Eval
     public function evaluate(expr:String):Bool
     {
         var ast = parser.parseString(expr);
-        var res = try interp.execute(ast) catch(e:Dynamic) {
-            trace("Error : "+e); false;
-        }
+        var res = try interp.execute(ast) catch(e:Dynamic) { trace("Error : "+e); false; }
         return cast(res, Bool);
     }
 }
