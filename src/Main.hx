@@ -185,7 +185,6 @@ class Main
 			var error = process.stderr.readAll ().toString ();
 			process.exitCode ();
 			process.close ();
-            Sys.println(output);
             //Sys.println("error : "+error);
             //Sys.println("haxelib install "+lib);
         }  
@@ -265,7 +264,6 @@ class HxpArgsCommand
 	public function build(rest:Rest<String>) 
     {
         command = BuildCommand.BUILD;
-        //TODO think a way to use Enums here?
         target = switch(rest.shift().toLowerCase() ) {
             case "php": variables.push("php"); Php;
             case "neko": variables.push("neko"); Neko;
@@ -274,11 +272,10 @@ class HxpArgsCommand
         variables = variables.concat(rest);
 	}
 
-    @:alias('install')
     @:command
-	public function update(rest:Rest<String>) 
+	public function install(rest:Rest<String>) 
     {
-		command = BuildCommand.INSTALL;
+        command = BuildCommand.INSTALL;
         target = switch(rest.shift().toLowerCase() ) {
             case "php": variables.push("php"); Php;
             case "neko": variables.push("neko"); Neko;

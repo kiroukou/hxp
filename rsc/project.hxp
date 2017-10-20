@@ -9,13 +9,15 @@
             "main" : "Main",
             
             "neko" : {
-                "output" : "bin/project.n",
-                "libs" : ["msignal"]
+                "output" : "bin/project.n"
+            },
+            "php" : {
+                "output" : "www/php"
             },
 
-            "libs" : ["tink"],
+            "libs" : [],
 
-            "dependencies" : [
+            "includes" : [
                 "module/include.hxp"
             ]
         },
@@ -26,11 +28,12 @@
             "sources" : ["src"],
             "if" : [
                 ["php", {
-                    "defines" : ["PHPDEFINE"]
+                    "defines" : ["PHPDEFINE"],
+                    "libs" : ["msignal"]
                 }],
                 ["!php", {
                     "defines": ["NOTPHPTARGET"],
-                    "libs" : ["tink_json"]
+                    "libs" : ["tink_json", "hxods"]
                 }]
             ]
         }
