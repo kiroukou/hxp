@@ -4,6 +4,13 @@ enum BuildTarget {
     Php;
 }
 
+enum Platform {
+    MAC;
+    WINDOWS;
+    LINUX;
+    UNKNOWN;
+}
+
 typedef BuildNode = {
     @:optional var libs : Array<String>;
     @:optional var flags : Array<String>;
@@ -20,7 +27,7 @@ typedef TargetNode = {
 
 typedef AppNode = {
     > BuildNode,
-    ?dependencies : Array<String>,
+    ?includes : Array<String>,
     ?main : String,
     ?neko : TargetNode,
     ?php : TargetNode,

@@ -1,31 +1,14 @@
-
-enum Platform {
-    MAC;
-    WINDOWS;
-    LINUX;
-    UNKNOWN;
-}
+import Types.Platform;
 
 class Helper
 {
     public static var PLATFORM = {
-			if (new EReg ("window", "i").match (Sys.systemName ())) 
-            {
-				WINDOWS;
-			} 
-            else if (new EReg ("linux", "i").match (Sys.systemName ())) 
-            {		
-				LINUX;
-			} 
-            else if (new EReg ("mac", "i").match (Sys.systemName ())) 
-            {
-				MAC;
-			}
-            else
-            {
-                UNKNOWN;
-            }
-		};
+		var sysName = Sys.systemName();
+		if (new EReg ("window", "i").match (sysName)) Platform.WINDOWS;
+		else if (new EReg ("linux", "i").match (sysName)) Platform.LINUX;
+		else if (new EReg ("mac", "i").match (sysName)) Platform.MAC;
+		else Platform.UNKNOWN;
+	};
 
     public static function isAbsolute (path:String):Bool 
     {
