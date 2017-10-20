@@ -8,18 +8,23 @@ Allows to declare one entry point for several targets. Currently supported targe
 
 Usage
 ### the following 3 command lines call are equivalent.
-haxelib run hxp neko
-haxelib run hxp build neko
-haxelib run hxp -f project.hxp neko
+```haxelib run hxp neko```
+
+```haxelib run hxp build neko```
+
+```haxelib run hxp -f project.hxp neko```
 
 This command will build the hxml file depending on the project.hxp configuration.
 
 
 ## Install
 ### the following commands allow to init the project and install automatically the haxelib libraries the project depends on
-haxelib run hxp install php -f rsc/project.hxp
-haxelib run hxp install neko -f rsc/project.hxp
-haxelib run hxp install neko
+
+```haxelib run hxp install php -f rsc/project.hxp```
+
+```haxelib run hxp install neko -f rsc/project.hxp```
+
+```haxelib run hxp install neko```
 
 ### Other flags
 

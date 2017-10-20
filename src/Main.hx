@@ -192,8 +192,10 @@ class Main
 			var error = process.stderr.readAll ().toString ();
 			process.exitCode ();
 			process.close ();
+            Sys.println("haxelib install "+lib);
+            Sys.println(output);
             //Sys.println("error : "+error);
-            //Sys.println("haxelib install "+lib);
+            
         }  
     }
 

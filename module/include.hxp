@@ -5,7 +5,7 @@
     "sources" : ["src"],
 
     "if" : [
-        ["php" , {"libs" : ["hxods"]}],
+        ["php" , {"libs" : ["hxods", "swf"]}],
         ["neko" , {"libs" : ["format"]}]
     ]
 }
