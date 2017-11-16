@@ -1,0 +1,6 @@
+-lib format
+-debug
+-cp /Users/admin/Dev/hxbuild/hxp/example/src
+-cp /Users/admin/Dev/hxbuild/hxp/example/module/src
+-neko /Users/admin/Dev/hxbuild/hxp/example/bin/project.n
+-main Main

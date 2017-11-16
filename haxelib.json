@@ -1,0 +1,11 @@
+{
+	"name": "hxp",
+	"url": "https://github.com/kiroukou/hxp",
+	"license": "Apache",
+	"tags": ["build", "cli"],
+	"description": "Command-line tools for Sugoi",
+	"version": "0.0.1",
+	"releasenote": "init",
+	"contributors": [ "kiroukou" ],
+	"dependencies": {"tink_json", "tink_cli"}
+}

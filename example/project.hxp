@@ -1,0 +1,53 @@
+
+{
+    "project" : {
+        "name" : "sample_project",
+        "version" : "1.0.0",
+        "author" : "kiroukou",
+        
+        "app" : {
+            "main" : "Main",
+            
+            "neko" : {
+                "output" : "bin/project.n"
+            },
+            "php" : {
+                "output" : "www/php"
+            },
+
+            "libs" : [],
+
+            "includes" : [
+                "module/include.hxp"
+            ]
+        },
+        
+        "build" : {
+            "flags" : [],
+            "defines" : [],
+            "sources" : ["src"],
+            "if" : [
+                ["php", {
+                    "defines" : ["PHPDEFINE"],
+                    "libs" : ["msignal"],
+                    "prebuild": {
+                        "command" : "echo 'toto';",
+                        "if" : [
+                            ["debug", {
+                                "command" : "echo 'php debug';"
+                            }],
+                            ["!debug", {
+                                "command" : "echo 'php release';"
+                            }]
+                        ]
+                    }
+                }],
+                ["neko", {
+                    "defines": [],
+                    "libs" : []
+                }]
+            ]
+        }
+    }
+}
+    

@@ -1,0 +1,11 @@
+{
+
+    "flags" : [],
+    "defines" : [],
+    "sources" : ["src"],
+    
+    "if" : [
+        ["php" , {"libs" : ["swf"]}],
+        ["neko" , {"libs" : ["format"]}]
+    ]
+}
