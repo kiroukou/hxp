@@ -26,7 +26,9 @@ class Main
     function loadDependency(context:ParserContext, dependencyPath:String)
     {
         var currentPath = context.getCurrentPath();
+        trace('$currentPath , $dependencyPath');
         var newPath = Helper.combine(currentPath,dependencyPath);
+        trace(newPath);
         context.setCurrentPath(Helper.getFileDirectory(newPath));
         
         var json = sys.io.File.getContent(newPath);
@@ -277,24 +279,14 @@ class Main
 
     public static function main()
     {
-        Sys.println("getCwd : "+Sys.getCwd());
-        Sys.println("Sys.programPath : "+Sys.programPath());
-        Sys.println("Sys.executablePath : "+Sys.executablePath());
-
         var cmd = new HxpArgsCommand();
         try 
         {
             Cli.process(Sys.args(), cmd).handle( function(o) {
                 var context = new ParserContext(cmd.getTarget());
-
-                var location = ".";
-                var path = new haxe.io.Path(location);
-                Sys.println("location : "+path);
-                
-
                 //we have to think path from the current config file
-                Sys.println("File is : "+Sys.programPath()+cmd.getFile());
-                var executionPath =  Helper.getFileDirectory(Sys.getCwd()+cmd.getFile());
+                var executionPath:String = Helper.getFileDirectory(Sys.getCwd()+''+cmd.getFile());
+                Sys.println("executionPath:"+executionPath);
                 context.setCurrentPath(executionPath);
                 
                 if( cmd.debug )
