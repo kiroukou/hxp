@@ -26,9 +26,9 @@ class Main
     function loadDependency(context:ParserContext, dependencyPath:String)
     {
         var currentPath = context.getCurrentPath();
-        trace('$currentPath , $dependencyPath');
+        //trace('$currentPath , $dependencyPath');
         var newPath = Helper.combine(currentPath,dependencyPath);
-        trace(newPath);
+        //trace(newPath);
         context.setCurrentPath(Helper.getFileDirectory(newPath));
         
         var json = sys.io.File.getContent(newPath);
@@ -286,7 +286,7 @@ class Main
                 var context = new ParserContext(cmd.getTarget());
                 //we have to think path from the current config file
                 var executionPath:String = Helper.getFileDirectory(Sys.getCwd()+''+cmd.getFile());
-                Sys.println("executionPath:"+executionPath);
+                //Sys.println("executionPath:"+executionPath);
                 context.setCurrentPath(executionPath);
                 
                 if( cmd.debug )
@@ -380,20 +380,20 @@ class HxpArgsCommand
         }
         
         var arg = rest.shift();
-        Sys.println("arg : "+arg);
+        //Sys.println("arg : "+arg);
         if( file == null ) 
         {
             var realFile =  Helper.combine(Sys.getCwd(), arg);
-            Sys.println("file ====="+realFile);
+            //Sys.println("file ====="+realFile);
             if( sys.FileSystem.exists(realFile) ) 
             {
-                Sys.println("the project file is "+realFile);
+                //Sys.println("the project file is "+realFile);
                 file = arg;
                 arg = rest.shift();
             }
             else
             {
-                Sys.println("Default project file name is used");
+                //Sys.println("Default project file name is used");
                 file = DEFAULT_PROJECT_FILE;
             }
         } 
