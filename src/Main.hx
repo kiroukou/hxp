@@ -279,6 +279,10 @@ class Main
 
     public static function main()
     {
+        //Set the execution path to be the real user path
+        var userDir = Sys.args().pop();
+        Sys.setCwd( userDir );
+        //
         var cmd = new HxpArgsCommand();
         try 
         {
@@ -286,7 +290,6 @@ class Main
                 var context = new ParserContext(cmd.getTarget());
                 //we have to think path from the current config file
                 var executionPath:String = Helper.getFileDirectory(Sys.getCwd()+''+cmd.getFile());
-                //Sys.println("executionPath:"+executionPath);
                 context.setCurrentPath(executionPath);
                 
                 if( cmd.debug )
@@ -380,11 +383,9 @@ class HxpArgsCommand
         }
         
         var arg = rest.shift();
-        //Sys.println("arg : "+arg);
         if( file == null ) 
         {
             var realFile =  Helper.combine(Sys.getCwd(), arg);
-            //Sys.println("file ====="+realFile);
             if( sys.FileSystem.exists(realFile) ) 
             {
                 //Sys.println("the project file is "+realFile);
