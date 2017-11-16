@@ -1,6 +1,8 @@
+-cmd echo 'Neko debug mode';
 -lib format
 -debug
--cp /Users/admin/Dev/hxbuild/hxp/example/src
--cp /Users/admin/Dev/hxbuild/hxp/example/module/src
--neko /Users/admin/Dev/hxbuild/hxp/example/bin/project.n
+-cp /Users/admin/Dev/hxp/example/src
+-cp /Users/admin/Dev/hxp/example/module/src
+-neko /Users/admin/Dev/hxp/example/bin/project.n
 -main Main
+-cmd echo '------------------------------------';

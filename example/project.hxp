@@ -28,8 +28,6 @@
             "sources" : ["src"],
             "if" : [
                 ["php", {
-                    "defines" : ["PHPDEFINE"],
-                    "libs" : ["msignal"],
                     "prebuild": {
                         "command" : "echo 'toto';",
                         "if" : [
@@ -43,8 +41,19 @@
                     }
                 }],
                 ["neko", {
-                    "defines": [],
-                    "libs" : []
+                    "prebuild": {
+                        "if" : [
+                            ["debug", {
+                                "command" : "echo 'Neko debug mode';"
+                            }],
+                            ["!debug", {
+                                "command" : "echo 'Neko release mode';"
+                            }]
+                        ]
+                    },
+                    "postbuild": {
+                        "command" : "echo '------------------------------------';"
+                    }
                 }]
             ]
         }

@@ -7,5 +7,8 @@
     "if" : [
         ["php" , {"libs" : ["swf"]}],
         ["neko" , {"libs" : ["format"]}]
-    ]
+    ],
+    "prebuild": {
+        "command" : "echo 'Bubble Sort example';"
+    }
 }
